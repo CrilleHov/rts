@@ -7,6 +7,5 @@ Image
 gspread
 gspread_dataframe
 oauth2client
-set_with_dataframe
 discovery
 ServiceAccountCredentials
