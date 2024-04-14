@@ -4,3 +4,7 @@ numpy
 datetime
 openpyxl
 Image
+gspread
+set_with_dataframe
+discovery
+ServiceAccountCredentials
