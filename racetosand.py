@@ -8,6 +8,7 @@ import gspread
 from gspread_dataframe import set_with_dataframe
 from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
+import time
 
 # Formattering av sidan
 im = Image.open('r2s3.png')
@@ -63,7 +64,7 @@ def get_leaderboard(num):
     df = pd.DataFrame(sh.get_worksheet(num).get_all_records())
     return df
 
-def get_plotdata(sheetname):
+def get_plotdata_boter(sheetname):
     df = pd.DataFrame(sh.worksheet(sheetname).get_all_records())
     return df
 
@@ -72,32 +73,24 @@ def get_data(sheetname):
     df = pd.DataFrame(sh.worksheet(sheetname).get_all_records())
     return df
 
+
 df_comps = get_data('Spelschema')
-df_boter = get_data('Böteskassa')
+df_boter = get_plotdata_boter('Böteskassa')
 df_points = get_data('Poangsystem')
 df_points.set_index('Antal spelare', inplace=True)
 df_points_major = get_data('Poangsystem major')
 df_points_major.set_index('Antal spelare', inplace=True)
-df_plotdata = get_plotdata('Leaderboard Utveckling')
+df_plotdata = get_plotdata_boter('Leaderboard Utveckling')
 
 num_worksheets = len(sh.worksheets())-1
 df_leaderboard = get_leaderboard(num_worksheets)
-
-# df_leaderboard = pd.DataFrame(sh.get_worksheet(num_worksheets).get_all_records())
-# df_plotdata = pd.DataFrame(sh.worksheet('Leaderboard Utveckling').get_all_records())
-# df_comps = pd.DataFrame(sh.worksheet('Spelschema').get_all_records())
-# df_boter = pd.DataFrame(sh.worksheet('Böteskassa').get_all_records())
-# df_points = pd.DataFrame(sh.worksheet('Poangsystem').get_all_records())
-# df_points.set_index('Antal spelare', inplace=True)
-# df_points_major = pd.DataFrame(sh.worksheet('Poangsystem major').get_all_records())
-# df_points_major.set_index('Antal spelare', inplace=True)
 
 # Leaderboardtab
 tab1.header("Leaderboard 2024")
 tab1.dataframe(df_leaderboard[['Spelarbild', 'Spelarnamn', 'Antal spelade tävlingar', 'Poäng']].sort_values('Poäng', ascending=False), hide_index=True, column_config={'Spelarbild':st.column_config.ImageColumn()})
 
 tab1.subheader("Utveckling Leaderboard 2024")
-tab1.line_chart(df_plotdata.sort_values('Poäng'), x='Deltävling', y='Poäng', color='Spelare')
+tab1.line_chart(df_plotdata.sort_values('Poäng'), x='Deltävling', y='Poäng', color='Spelare', width=800, height=500)
 
 tab1.divider()
 
@@ -117,6 +110,16 @@ tab2.dataframe(df_comps, use_container_width=True, hide_index=True, column_confi
 tab3.header("Böteskassa")
 bot = df_boter.iloc[0,1]
 tab3.write('Böteskassan ligger för närvarande på: {:}kr'.format(bot))
+tab3.divider()
+tab3.subheader("Böteslista")
+tab3.write("Har ej straffutrustning: 1000kr")
+tab3.write("HIO/Albatross, resterande spelare: 100kr")
+tab3.write("Kasta utrustning: 50kr/gång")
+tab3.write("Kissa på banan: 50kr")
+tab3.write("Tappa bort järnheadcovers: 50kr/styck")
+tab3.write("Inte på golfbanan 30 min innan start: 50kr")
+tab3.write("Biraboll: 20kr")
+tab3.write("Streck/0 poäng: 10kr/streck")
 
 #Bildtab
 tab4.image("bild1.jpg")
@@ -180,7 +183,7 @@ if major_flag == 'Nej':
                 tidigare_points = float(tidigare_points)
                 info = [spelare, tidigare_points, comp]
                 df_to_plot.loc[len(df_to_plot)] = info
-
+        time.sleep(10)
         
         tab6.subheader("Uppdaterad Leaderboard:")
         tab6.dataframe(df_leaderboard[['Spelarbild', 'Spelarnamn', 'Antal spelade tävlingar', 'Poäng']].sort_values('Poäng', ascending=False), hide_index=True, column_config={'Spelarbild':st.column_config.ImageColumn()})
@@ -247,7 +250,7 @@ if major_flag == 'Ja':
                 info = [spelare, tidigare_points, comp]
                 df_to_plot.loc[len(df_to_plot)] = info
 
-        
+        time.sleep(10)
         tab6.subheader("Uppdaterad Leaderboard:")
         tab6.dataframe(df_leaderboard[['Spelarbild', 'Spelarnamn', 'Antal spelade tävlingar', 'Poäng']].sort_values('Poäng', ascending=False), hide_index=True, column_config={'Spelarbild':st.column_config.ImageColumn()})
         
@@ -270,7 +273,6 @@ if major_flag == 'Ja':
             st.session_state['antal'] = ""
             st.session_state['spelare'] = " "
             st.session_state['major'] = ""
-
         upd = tab6.button("Uppdatera Leaderboard", type='primary', on_click=clear_box)
 
 else:
