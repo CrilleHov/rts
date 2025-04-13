@@ -1,18 +1,12 @@
 import streamlit as st
-import numpy as np
+from streamlit import connections
+from sqlalchemy import text
 import pandas as pd
+import numpy as np
 import datetime as dt
-from PIL import Image
-#from streamlit_gsheets import GSheetsConnection
-import gspread
-from gspread_dataframe import set_with_dataframe
-from googleapiclient import discovery
-from oauth2client.service_account import ServiceAccountCredentials
-import time
+from st_social_media_links import SocialMediaIcons
 
-# Formattering av sidan
-im = Image.open('r2s3.png')
-st.set_page_config(page_title="Race to Hills 2024", page_icon = im)
+st.set_page_config(page_title="Race to Hills 2025")
 hide_default_format = """
        <style>
        #MainMenu {visibility: hidden; }
@@ -21,17 +15,90 @@ hide_default_format = """
        """
 st.markdown(hide_default_format, unsafe_allow_html=True)
 
-# Set up Google Sheets API credentials
-scope = ["https://spreadsheets.google.com/feeds",'https://www.googleapis.com/auth/drive']
-creds = ServiceAccountCredentials.from_json_keyfile_name('racetosand.json', scope)
-client = gspread.authorize(creds)
-sh = client.open("Data")
+
+# Skapa connection till databasen
+conn = st.connection('mysql', type='sql')
+
+# Hämta data
+try:
+    df_golfid = conn.query('SELECT * from spelare;')
+    df_spelschema = conn.query('SELECT * from competitions;')
+    df_leaderboard = conn.query('SELECT spelare AS Spelare, '
+                            '  SUM(poäng) AS poäng, '
+                            '  SUM(CASE WHEN poäng != 0 THEN 1 ELSE 0 END) AS antal_comps,'
+                            '  SUM(CASE WHEN placering = 1 THEN 1 ELSE 0 END) AS antal_vinster, '
+                            ' SUM(CASE WHEN placering = antal_spelare THEN 1 ELSE 0 END) AS antal_losses'
+                            '  from leaderboard '
+                            '  GROUP BY spelare;')
+    df_leaderboard_chart = conn.query('SELECT * from leaderboard;')
+    df_böter = conn.query('SELECT spelare, '
+                            'ROUND(SUM(bötesbelopp)) AS total_böter '
+                            'FROM böter '
+                            'GROUP BY spelare;')
+    df_tot_böter = conn.query('SELECT * FROM tot_böter WHERE datum = (SELECT MAX(datum) FROM tot_böter);')
+except:
+    st.write("Något gick fel med datahämtningen... Kontakta IT")
+
+df_leaderboard_chart = (
+    df_leaderboard_chart
+    .assign(tävling=lambda x: pd.to_datetime(x['tävling']))
+    .sort_values(['spelare', 'tävling'])
+    .assign(totala_poäng=lambda x: x.groupby('spelare')['poäng'].cumsum())
+)
+
+df_leaderboard = df_leaderboard.rename(columns={'spelare': 'Spelare',
+                                                'poäng':'Totala poäng', 
+                                                'antal_comps':'Antal spelade tävlingar',
+                                                'antal_vinster':'Antal vinster',
+                                                'antal_losses':'Antal sistaplatser'})
+
+df_böter['total_böter'] = df_böter['total_böter'].round(0).astype(int)
+
+# Funktion för att hämta rätt poäng efter placering, hur många spelare som var med, och om tävlingen var en major
+def get_points(placering=1, antal_spelare=3, major_flag='Nej'):
+    if placering == 0:
+        return 0
+    else:
+        antal_spelare = int(antal_spelare)
+        if major_flag == 'Ja':
+            points = df_point_major.loc[placering, antal_spelare]
+        else:
+            points = df_point_nonmajor.loc[placering, antal_spelare]
+        return points
+    
+
+# Poängsystem
+df_point_nonmajor = pd.DataFrame({
+            3: [4,2,1,0,0,0,0,0,0,0,0,0],
+            4: [5,3,2,1,0,0,0,0,0,0,0,0],
+            5: [6,4,3,2,1,0,0,0,0,0,0,0],
+            6: [7,5,4,3,2,1,0,0,0,0,0,0],
+            7: [8,6,5,4,3,2,1,0,0,0,0,0],
+            8: [9,7,6,5,4,3,2,1,0,0,0,0],
+            9: [10,8,7,6,5,4,3,2,1,0,0,0],
+            10:[11,9,8,7,6,5,4,3,2,1,0,0],
+            11:[12,10,9,8,7,6,5,4,3,2,1,0],
+            12:[13,11,10,9,8,7,6,5,4,3,2,1]
+            }, index=[1,2,3,4,5,6,7,8,9,10,11,12])
+
+df_point_major = pd.DataFrame({
+            3: [5,2.5,1,0,0,0,0,0,0,0,0,0],
+            4: [6,3.5,2,1,0,0,0,0,0,0,0,0],
+            5: [7,4.5,3,2,1,0,0,0,0,0,0,0],
+            6: [8,5.5,4,3,2,1,0,0,0,0,0,0],
+            7: [9,6.5,5,4,3,2,1,0,0,0,0,0],
+            8: [10,7.5,6,5,4,3,2,1,0,0,0,0],
+            9: [11,8.5,7,6,5,4,3,2,1,0,0,0],
+            10:[12,9.5,8,7,6,5,4,3,2,1,0,0],
+            11:[13,10.5,9,8,7,6,5,4,3,2,1,0],
+            12:[14,11.5,10,9,8,7,6,5,4,3,2,1]
+            }, index=[1,2,3,4,5,6,7,8,9,10,11,12])
 
 
-today = dt.date.today()
-finalen = dt.date(2024, 9, 7)
-diff = finalen - today
-diff_days = diff.days
+player_names = ["Benne", "Löken", "Vigge", "Frasse", "Rantzow",
+                    "Alvin", "Jojo", "Axel", "Sebbe", "Crille"]
+
+
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -48,248 +115,206 @@ with col1:
     st.write(' ')
 
 with col2:
-    st.title('Race to Hills 2024')
+    st.title('Race to Hills 2025')
 
 with col3:
     st.write(' ') 
     
 
+st.write("")
+st.write("Välkomna till en ny rafflande upplaga av Race to Hills 2025. "
+            "Vi kommer under året att spela sex stycken deltävlingar innan finalen går av stapeln i Göteborg den 15 - 17 augusti.")
+st.write("")
+st.write("Väl mött!")
+
+social_media_links = [
+    "https://www.instagram.com/racetosand/",
+]
+social_media_icons = SocialMediaIcons(social_media_links)
+social_media_icons.render()
+
 st.divider()
 
-# selection = st.radio("Välkommen till en liten samlingssida för Race to Hills 2024! Välj bland nedan menyer:", ('Bilder', 'Leaderboard', 'Spelschema', 'Böteskassa', 'Countdown'), horizontal=True)
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(['🏆 Leaderboard', '📅 Spelschema', '💸 Böteskassa', '📸 Bilder', '⏱️ Countdown', 'Uppdatera leaderboard', 'Golf-id'])
+# Skapa tabs
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(['🏆 Leaderboard', 
+                                                          '📅 Spelschema', 
+                                                          '💸 Böteskassa', 
+                                                          '📸 Bilder', 
+                                                          '⏱️ Countdown',
+                                                          '🏅 Tidigare vinnare', 
+                                                          'Uppdatera leaderboard', 
+                                                          'Golf-id'])
 
 
-def get_leaderboard(num):
-    df = pd.DataFrame(sh.get_worksheet(num).get_all_records())
-    return df
-
-def get_plotdata_boter(sheetname):
-    df = pd.DataFrame(sh.worksheet(sheetname).get_all_records())
-    return df
-
-@st.cache_data
-def get_data(sheetname):
-    df = pd.DataFrame(sh.worksheet(sheetname).get_all_records())
-    return df
-
-
-df_comps = get_data('Spelschema')
-df_boter = get_plotdata_boter('Böteskassa')
-df_points = get_data('Poangsystem')
-df_points.set_index('Antal spelare', inplace=True)
-df_points_major = get_data('Poangsystem major')
-df_points_major.set_index('Antal spelare', inplace=True)
-df_plotdata = get_plotdata_boter('Leaderboard Utveckling')
-
-num_worksheets = len(sh.worksheets())-1
-df_leaderboard = get_leaderboard(num_worksheets)
 
 # Leaderboardtab
-tab1.header("Leaderboard 2024")
-tab1.dataframe(df_leaderboard[['Spelarbild', 'Spelarnamn', 'Antal spelade tävlingar', 'Poäng']].sort_values('Poäng', ascending=False), hide_index=True, column_config={'Spelarbild':st.column_config.ImageColumn()})
+with tab1:
+    tab1.dataframe(df_leaderboard.sort_values('Totala poäng', ascending=False), use_container_width=True, 
+                   hide_index=True)
 
-tab1.subheader("Utveckling Leaderboard 2024")
-tab1.line_chart(df_plotdata.sort_values('Poäng'), x='Deltävling', y='Poäng', color='Spelare', width=800, height=500)
+    tab1.line_chart(df_leaderboard_chart, x='tävling', y='totala_poäng', color='spelare', 
+                    width=800, height=500, x_label = 'Datum', y_label='Totala poäng')
 
-tab1.divider()
+    with st.form(key='update', border=False):
+        update = st.form_submit_button(label='Uppdatera sidan')
+        if update:
+            st.cache_data.clear()
+            st.rerun()
 
-tab1.header("Antal vinster under året:")
-tab1.dataframe(df_leaderboard[['Spelarbild', 'Spelarnamn', 'Antal vinster']].sort_values('Antal vinster', ascending=False), hide_index=True, column_config={'Spelarbild':st.column_config.ImageColumn()})
 
-tab1.divider()
-
-tab1.header("Antal sistaplatser under året:")
-tab1.dataframe(df_leaderboard[['Spelarbild', 'Spelarnamn', 'Antal förluster']].sort_values('Antal förluster', ascending=False), hide_index=True, column_config={'Spelarbild':st.column_config.ImageColumn()})
 
 # Spelschematab
-tab2.header("Spelschema 2024")
-tab2.dataframe(df_comps, use_container_width=True, hide_index=True, column_config={' ':st.column_config.ImageColumn()}) 
-
-# Böteskassatab
-tab3.header("Böteskassa")
-bot = df_boter.iloc[0,1]
-tab3.write('Böteskassan ligger för närvarande på: {:}kr'.format(bot))
-tab3.divider()
-tab3.subheader("Böteslista")
-tab3.write("Har ej straffutrustning: 1000kr")
-tab3.write("HIO/Albatross, resterande spelare: 100kr")
-tab3.write("Kasta utrustning: 50kr/gång")
-tab3.write("Kissa på banan: 50kr")
-tab3.write("Tappa bort järnheadcovers: 50kr/styck")
-tab3.write("Inte på golfbanan 30 min innan start: 50kr")
-tab3.write("Biraboll: 20kr")
-tab3.write("Streck/0 poäng: 10kr/streck")
-
-#Bildtab
-tab4.image("bild1.jpg")
-tab4.image("bild2.jpeg")
-tab4.image("bild3.jpeg")
-tab4.image("bild4.jpeg")
-tab4.image("bild5.jpg")
-
-#Countdowntab
-tab5.header('Nedräkning till finalen')
-tab5.write('Nu är det endast {:} dagar kvar till finalen. TAGGA!!'.format(diff_days))
-tab5.image("beer.jpg")
+df_spelschema = df_spelschema.rename(columns={'datum': 'Datum',
+                                              'bana':'Bana',
+                                              'hosts':'Hosts',
+                                              'major':'Major',
+                                              'plats':'Plats',
+                                              'år':'År'
+                                              })
+with tab2:
+    year = tab2.radio("Vilket år vill du se spelschema för?",
+                        ['2024', '2025'], 1)
+    tab2.header("Spelschema {:}".format(year))
+    tab2.dataframe(df_spelschema[df_spelschema["År"] == year], use_container_width=True, 
+                   hide_index=True)
 
 
-#Uppdatera leaderboard
-tab6.header("Här kan du uppdatera leaderboarden efter tävling")
-comp = tab6.selectbox('Vilken deltävling?', ('','1. LaGK HB', '2. LaGK EB', '3. St. Arild', '4. LaGK EB', '5. Sjöbo', '6. St Ibb'),index=None, key='tävling', placeholder=' ')
-num_players = tab6.selectbox('Hur många spelare var med i deltävlingen?', ('','3', '4', '5', '6', '7', '8', '9', '10', '11', '12'),index=None, key='antal', placeholder=' ')
-players = tab6.multiselect('Vilka spelare var med?', (' ','Axel', 'Crille', 'Jojo', 'Frasse', 'Rantzow', 'Alvin', 'Benne', 'Löken', 'Sebbe', 'Dempa', 'Vigge'), key='spelare', placeholder='')
-major_flag = tab6.selectbox('Var tävlingen en major?', ('','Ja', 'Nej'), index=None, key='major', placeholder=' ')
-tab6.divider()
+# Böteskassa
+with tab3:
+    tab3.header("Böteskassa 2025")
 
-alla_spelare = ['Axel', 'Jojo', 'Benne', 'Rantzow', 'Crille', 'Löken', 'Alvin', 'Vigge', 'Frasse', 'Sebbe', 'Dempa']
+    tab3.subheader("Total böteskassa:")
+    tab3.write(f"Total böteskassa är för närvarande på {df_tot_böter.iloc[0,1]} kr (uppdaterat: {df_tot_böter.iloc[0,0]})")
 
-if major_flag == 'Nej':
-    df_to_plot = pd.DataFrame(columns=['Spelare', 'Poäng', 'Deltävling'])
-    num_players_str = num_players
-    if len(players) != int(num_players):
-        tab6.write("Något är fel... Antal spelare stämmer inte överrens med de spelare du sagt är med i tävlingen")
-    else:
-        tot_points = []
-        for spelare in alla_spelare:
-            if spelare in players:
-                placering = tab6.number_input("Vilken placering fick {:}?".format(spelare), 1, int(num_players), "min", 1, key='placering{:}'.format(spelare))
-                placering = str(placering)
-                points = df_points.loc[int(num_players), placering]
-                points = float(points)
-                tidigare_points = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Poäng']
-                tidigare_points = float(tidigare_points)
-                ny_points = tidigare_points+points
-                tidigare_comps = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal spelade tävlingar']
-                tidigare_comps = int(tidigare_comps)
-                ny_comps = tidigare_comps + 1
-                df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Poäng'] = ny_points
-                df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal spelade tävlingar'] = ny_comps
-                if placering == num_players_str:
-                    tidigare_loss = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal förluster'] 
-                    ny_loss = int(tidigare_loss) + 1
-                    df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal förluster'] = ny_loss
-                if placering == '1':
-                    tidigare_wins = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal vinster'] 
-                    ny_wins = int(tidigare_wins) + 1
-                    df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal vinster'] = ny_wins
+    tab3.divider()
+    tab3.subheader("Nedan ser ni bötesbeloppen för 2025 års säsong:")
+    tab3.write("")
+    tab3.write("Streck/0 poäng: 10kr")
+    tab3.write("Kissar på golfbanan: 50kr")
+    tab3.write("Kastar utrustning: 50kr/gång")
+    tab3.write("Kastar boll: 15kr/boll")
+    tab3.write("Tappar bort järnheadcovers: 50kr/styck")
+    tab3.write("Inte på golfbanan 30 min innan FÖRSTA starttid: 50kr")
+    tab3.write("Har ej straffutrustning: 1000kr")
+    tab3.write("Inte har minst ett Race to Sand-plagg på sig: 100kr")
+    tab3.write("Bira-boll: 20kr")
+    tab3.write("HIO/Albatross ska de andra spelarna böta: 100kr")
+    tab3.write("Ej tillgänglig att scoreföra på Gamebook: 100kr")
+    tab3.write("Host har inte med priset till deltävling: 500kr")
 
-                info = [spelare, ny_points, comp]
-                df_to_plot.loc[len(df_to_plot)] = info
-                # df_to_plot = df_to_plot.append(pd.DataFrame(info, columns=['Spelare', 'Poäng', 'Deltävling'], ignore_index=True))
+    tab3.divider()
 
-            else:   
-                tidigare_points = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Poäng']
-                tidigare_points = float(tidigare_points)
-                info = [spelare, tidigare_points, comp]
-                df_to_plot.loc[len(df_to_plot)] = info
-        time.sleep(10)
+    tab3.subheader("Nedan ser ni total inbetald bötesbelopp under säsongen, per spelare:")
+
+    for row in df_böter.itertuples():
+        st.write(f"{row.spelare}:  {row.total_böter} kr")
+    
+    tab3.write("")
+    tab3.bar_chart(df_böter, x='spelare', y='total_böter', x_label='Spelare', y_label='Total böter, kr', color='spelare')
+
+    tab3.divider()
+
+    tab3.subheader("Efter varje deltävling, fyll i hur mycket böter spelaren fick i formuläret nedan:")
+    
+    # Formulär för att fylla i spelarnas böter efter varje deltävling
+    with st.form(key='fee_form'):
+        fees = {}
+        for player in player_names:
+            fee = st.number_input(f"Böter för {player}", min_value=0, step=1, key=player)
+            fees[player] = fee
         
-        tab6.subheader("Uppdaterad Leaderboard:")
-        tab6.dataframe(df_leaderboard[['Spelarbild', 'Spelarnamn', 'Antal spelade tävlingar', 'Poäng']].sort_values('Poäng', ascending=False), hide_index=True, column_config={'Spelarbild':st.column_config.ImageColumn()})
+        submit_button = st.form_submit_button(label='Uppdatera spelarböter')
+
+
+        if submit_button:
+            with conn.session as session:
+                for player, fee in fees.items():
+                    session.execute(text('INSERT INTO böter (spelare, bötesbelopp) VALUES (:spelare, :böter);'), {"spelare":player, "böter":fee})
+                    session.commit()
+                st.success("Bötesbeloppen är uppdaterade.")
+                st.cache_data.clear()
+                st.rerun()
+
+
+# Bildtab
+with tab4:
+    tab4.image("bild6.jpg")
+    tab4.image("bild1.jpg")
+    tab4.image("bild2.jpeg")
+    tab4.image("bild3.jpeg")
+    tab4.image("bild4.jpeg")
+    tab4.image("bild5.jpg")
+
+
+# Countdowntab
+diff = dt.date(2025, 8, 14) - dt.date.today()
+diff_days = diff.days
+with tab5:
+    tab5.header('Nedräkning till finalen')
+    tab5.write('Nu är det endast {:} dagar kvar till finalen. TAGGA!!'.format(diff_days))
+    tab5.image("hills.jpeg")
+    tab5.image("beer2.jpeg")
+
+
+# Historiska vinnare
+with tab6:
+    tab6.header('Tidigare vinnare')
+    tab6.write('2019: Alvin')
+    tab6.write('2020: Crille')
+    tab6.write('2021: Frasse')
+    tab6.write('2022: Löken')
+    tab6.write('2023: Alvin')
+    tab6.write('2024: Frasse')
+    tab6.write('2025: TBD (Axel känns het i år)')
+
+
+# Uppdatera leaderboarden
+with tab7:
+    tab7.header('Uppdatera leaderborden:')
+    tab7.write('Fyll i vilken tävling och placering för respektive spelare. Om någon inte spelade, fyll i "0"')
+
+
+    comps = df_spelschema[df_spelschema['År'] == '2025']['Datum']
+    comp = tab7.selectbox('Vilken deltävling?', comps,
+                          index=None, key='tävling', placeholder=' ')
+    
+    num_players = tab7.selectbox('Hur många spelare var med i deltävlingen?', 
+                                 ('','3', '4', '5', '6', '7', '8', '9', '10', '11', '12'),
+                                 index=None, key='antal', placeholder=' ')
+    
+    majorflag = tab7.selectbox('Var tävlingen en major?', ('Ja', 'Nej'), index=None, key='major', placeholder='')
+
+    with st.form(key='leaderboard_form'):
+        placering = {}
+        for player in player_names:
+            placering_spelare = st.number_input(f"Vilken placering fick {player}", min_value=0, step=1, key=player+' ')
+            placering[player] = placering_spelare
         
-        tab6.divider()
-   
-        def clear_box():
-            global df_leaderboard
-            global df_plotdata
-            global df_to_plot
-            df_plotdata = pd.concat([df_plotdata, df_to_plot], axis=0)
-            worksheet = sh.add_worksheet(title=comp, rows=100, cols=20)
-            worksheet.update([df_leaderboard.columns.values.tolist()] + df_leaderboard.values.tolist())
-            worksheet_plot = sh.worksheet('Leaderboard Utveckling')
-            worksheet_plot.clear()
-            worksheet_plot.update([df_plotdata.columns.values.tolist()] + df_plotdata.values.tolist())
-            tab6.write("Leaderboard uppdaterad")
+        submit_button = st.form_submit_button(label='Uppdatera leaderboard')
 
-            st.session_state['tävling'] = ""
-            st.session_state['antal'] = ""
-            st.session_state['spelare'] = " "
-            st.session_state['major'] = ""
+        if submit_button:
+            placering2 = {}
+            for player in player_names:
+                placering_spelare = int(placering[player])
+                placering2[player] = {'point':get_points(placering_spelare, num_players, majorflag), 'placering':placering_spelare}
 
-        upd = tab6.button("Uppdatera Leaderboard", type='primary', on_click=clear_box)
-
-
-
-if major_flag == 'Ja':
-    df_to_plot = pd.DataFrame(columns=['Spelare', 'Poäng', 'Deltävling'])
-    num_players_str = num_players
-    if len(players) != int(num_players):
-        tab6.write("Något är fel... Antal spelare stämmer inte överrens med de spelare du sagt är med i tävlingen")
-    else:
-        tot_points = []
-        for spelare in alla_spelare:
-            if spelare in players:
-                placering = tab6.number_input("Vilken placering fick {:}?".format(spelare), 1, int(num_players), "min", 1, key='placering{:}'.format(spelare))
-                placering = str(placering)
-                points = df_points_major.loc[int(num_players), placering]
-                points = float(points)
-                tidigare_points = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Poäng']
-                tidigare_points = float(tidigare_points)
-                ny_points = tidigare_points+points
-                tidigare_comps = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal spelade tävlingar']
-                tidigare_comps = int(tidigare_comps)
-                ny_comps = tidigare_comps + 1
-                df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Poäng'] = ny_points
-                df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal spelade tävlingar'] = ny_comps
-                if placering == num_players_str:
-                    tidigare_loss = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal förluster'] 
-                    ny_loss = int(tidigare_loss) + 1
-                    df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal förluster'] = ny_loss
-                if placering == '1':
-                    tidigare_wins = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal vinster'] 
-                    ny_wins = int(tidigare_wins) + 1
-                    df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Antal vinster'] = ny_wins
-
-                info = [spelare, ny_points, comp]
-                df_to_plot.loc[len(df_to_plot)] = info
-
-            else:   
-                tidigare_points = df_leaderboard.loc[df_leaderboard['Spelarnamn'] == spelare, 'Poäng']
-                tidigare_points = float(tidigare_points)
-                info = [spelare, tidigare_points, comp]
-                df_to_plot.loc[len(df_to_plot)] = info
-
-        time.sleep(10)
-        tab6.subheader("Uppdaterad Leaderboard:")
-        tab6.dataframe(df_leaderboard[['Spelarbild', 'Spelarnamn', 'Antal spelade tävlingar', 'Poäng']].sort_values('Poäng', ascending=False), hide_index=True, column_config={'Spelarbild':st.column_config.ImageColumn()})
-        
-        tab6.divider()
-   
-        def clear_box():
-            global df_leaderboard
-            global df_plotdata
-            global df_to_plot
-            df_plotdata = pd.concat([df_plotdata, df_to_plot], axis=0)
-            worksheet = sh.add_worksheet(title=comp, rows=100, cols=20)
-            worksheet.update([df_leaderboard.columns.values.tolist()] + df_leaderboard.values.tolist())
-            # worksheet_plot = sh.add_worksheet(title='test', rows=100, cols=20)
-            worksheet_plot = sh.worksheet('Leaderboard Utveckling')
-            worksheet_plot.clear()
-            worksheet_plot.update([df_plotdata.columns.values.tolist()] + df_plotdata.values.tolist())
-            tab6.write("Leaderboard uppdaterad")
-
-            st.session_state['tävling'] = ""
-            st.session_state['antal'] = ""
-            st.session_state['spelare'] = " "
-            st.session_state['major'] = ""
-        upd = tab6.button("Uppdatera Leaderboard", type='primary', on_click=clear_box)
-
-else:
-    tab6.empty()
+            with conn.session as session:
+                for player, data in placering2.items():
+                    session.execute(text('INSERT INTO leaderboard (tävling, spelare, poäng, placering, antal_spelare) VALUES (:tävling, :spelare, :poäng, :placering, :antal_spelare);'), 
+                                    {"tävling": comp, "spelare":player, "poäng":data['point'], 'placering':data['placering'], 'antal_spelare':num_players})
+                    session.commit()
+                st.success("Leaderboarden är uppdaterad.")
+                spelade = sum(1 for p in placering.values() if p > 0)
+                if spelade != int(num_players):
+                    st.warning(f"Du angav att {num_players} spelade men du har fyllt i {spelade} placeringar..."
+                                "Kontakta IT för att rätta i databasen!")
+                else:
+                    st.cache_data.clear()
+                    st.rerun()
 
 
-# Allas golf-id
-tab7.header('Golf-id:')
-tab7.write("Axel: 980512-009")
-tab7.write("Rantzow: 990314-001")
-tab7.write("Sebbe: 970920-028")
-tab7.write("Frasse: 980422-030")
-tab7.write("Benne: 980627-033")
-tab7.write("Löken: 981226-002")
-tab7.write("Dempa: 981124-006")
-tab7.write("Jojo: 990920-005")
-tab7.write("Alvin: 961029-001")
-tab7.write("Vigge: 980703-003")
-tab7.write("Crille: 970317-002")
-
+# Golf-id
+with tab8:
+    tab8.title("Golf-id för respektive spelare")
+    for row in df_golfid.itertuples():
+        st.write(f"{row.spelarnamn}  {row.golfid}")
