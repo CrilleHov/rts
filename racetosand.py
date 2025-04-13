@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 from st_social_media_links import SocialMediaIcons
+import mysql.connector
 
 st.set_page_config(page_title="Race to Hills 2025")
 hide_default_format = """
@@ -17,7 +18,16 @@ st.markdown(hide_default_format, unsafe_allow_html=True)
 
 
 # Skapa connection till databasen
-conn = st.connection('mysql', type='sql')
+conn = mysql.connector.connect(
+    host=st.secrets["mysql"]["host"],
+    port=st.secrets["mysql"]["port"],
+    database=st.secrets["mysql"]["database"],
+    user=st.secrets["mysql"]["user"],
+    password=st.secrets["mysql"]["password"]
+)
+
+#conn = mysql.connector.connect(
+#conn = st.connection('mysql', type='sql')
 
 # Hämta data
 try:
