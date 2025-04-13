@@ -5,3 +5,4 @@ pandas
 numpy
 datetime
 st_social_media_links
+Error
