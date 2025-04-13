@@ -57,46 +57,46 @@ conn = get_database_connection()
 # Fetch data only if connection is successful
 if conn:
     try:
-       df_golfid = execute_query(conn, 'SELECT * from spelare;')
-       df_spelschema = execute_query(conn, 'SELECT * from competitions;')
-       df_leaderboard = execute_query(conn, 'SELECT spelare AS Spelare, '
+        df_golfid = execute_query(conn, 'SELECT * from spelare;')
+        df_spelschema = execute_query(conn, 'SELECT * from competitions;')
+        df_leaderboard = execute_query(conn, 'SELECT spelare AS Spelare, '
                                 '  SUM(poäng) AS poäng, '
                                 '  SUM(CASE WHEN poäng != 0 THEN 1 ELSE 0 END) AS antal_comps,'
                                 '  SUM(CASE WHEN placering = 1 THEN 1 ELSE 0 END) AS antal_vinster, '
                                 ' SUM(CASE WHEN placering = antal_spelare THEN 1 ELSE 0 END) AS antal_losses'
                                 '  from leaderboard '
                                 '  GROUP BY spelare;')
-       df_leaderboard_chart = execute_query(conn, 'SELECT * from leaderboard;')
-       df_böter = execute_query(conn, 'SELECT spelare, '
+        df_leaderboard_chart = execute_query(conn, 'SELECT * from leaderboard;')
+        df_böter = execute_query(conn, 'SELECT spelare, '
                                 'ROUND(SUM(bötesbelopp)) AS total_böter '
                                 'FROM böter '
                                 'GROUP BY spelare;')
-       df_tot_böter = execute_query(conn, 'SELECT * FROM tot_böter WHERE datum = (SELECT MAX(datum) FROM tot_böter);')
+        df_tot_böter = execute_query(conn, 'SELECT * FROM tot_böter WHERE datum = (SELECT MAX(datum) FROM tot_böter);')
     
-       # Rest of your code remains the same from here...
+        # Rest of your code remains the same from here...
         
         # Close connection (important!)
-       conn.close()
+        conn.close()
         
         # Process data
-       df_leaderboard_chart = (
+        df_leaderboard_chart = (
             df_leaderboard_chart
             .assign(tävling=lambda x: pd.to_datetime(x['tävling']))
             .sort_values(['spelare', 'tävling'])
             .assign(totala_poäng=lambda x: x.groupby('spelare')['poäng'].cumsum())
         )
 
-       df_leaderboard = df_leaderboard.rename(columns={'spelare': 'Spelare',
+        df_leaderboard = df_leaderboard.rename(columns={'spelare': 'Spelare',
                                                         'poäng':'Totala poäng', 
                                                         'antal_comps':'Antal spelade tävlingar',
                                                         'antal_vinster':'Antal vinster',
                                                         'antal_losses':'Antal sistaplatser'})
 
-       df_böter['total_böter'] = df_böter['total_böter'].round(0).astype(int)
+        df_böter['total_böter'] = df_böter['total_böter'].round(0).astype(int)
         
         # Continue with the rest of your application code...
-        # Poängsystem
-        df_point_nonmajor = pd.DataFrame({
+       # Poängsystem
+       df_point_nonmajor = pd.DataFrame({
                    3: [4,2,1,0,0,0,0,0,0,0,0,0],
                    4: [5,3,2,1,0,0,0,0,0,0,0,0],
                    5: [6,4,3,2,1,0,0,0,0,0,0,0],
@@ -365,5 +365,4 @@ def get_points(placering=1, antal_spelare=3, major_flag='Nej'):
             points = df_point_nonmajor.loc[placering, antal_spelare]
         return points
     
-
 
