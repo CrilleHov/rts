@@ -20,12 +20,16 @@ st.markdown(hide_default_format, unsafe_allow_html=True)
 # Skapa connection till databasen
 @st.cache_resource
 def get_connection():
-    return mysql.connector.connect(
-        host=st.secrets["mysql"]["host"],    
-        user=st.secrets["mysql"]["user"],
-        password=st.secrets["mysql"]["password"],
-        database=st.secrets["mysql"]["database"]
-    )
+    return mysql.connector.connect(**st.secrets["mysql"])
+       
+# @st.cache_resource
+# def get_connection():
+#     return mysql.connector.connect(
+#         host=st.secrets["mysql"]["host"],    
+#         user=st.secrets["mysql"]["user"],
+#         password=st.secrets["mysql"]["password"],
+#         database=st.secrets["mysql"]["database"]
+#     )
 
 conn = get_connection()
 cursor = conn.cursor(dictionary=True)
