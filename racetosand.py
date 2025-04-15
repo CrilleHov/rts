@@ -267,7 +267,7 @@ with tab3:
                 st.cache_data.clear()
                 st.rerun()
             except Error as e:
-                st.error("Något gick fel vid uppdatering av böter.")
+                st.error(f"Något gick fel vid uppdatering av böter: {e}")
 
 
 # Bildtab
@@ -357,7 +357,7 @@ with tab7:
                     st.cache_data.clear()
                     st.rerun()
             except Error as e:
-                st.error("Något gick fel vid uppdatering av leaderboard.")
+                st.error(f"Något gick fel vid uppdatering av böter: {e}")
 
 
 
