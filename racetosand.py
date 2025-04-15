@@ -65,7 +65,7 @@ try:
     cursor.execute("""
         SELECT spelare,
             ROUND(SUM(bötesbelopp)) AS total_böter
-        FROM böter
+        FROM fees
         GROUP BY spelare;
     """)
     df_böter = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
