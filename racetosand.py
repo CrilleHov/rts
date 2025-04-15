@@ -32,7 +32,7 @@ cursor = conn.cursor()
 
 
 try:
-    cursor.execute("SELECT * FROM spelare;")
+    cursor.execute("SELECT * FROM public.spelare;")
     df_golfid = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
 except Exception as e:
     st.error(f"Fel vid datahämtning från 'spelare': {e}")
