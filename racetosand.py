@@ -17,6 +17,10 @@ hide_default_format = """
        """
 st.markdown(hide_default_format, unsafe_allow_html=True)
 
+# Stäng befintlig anslutning om den finns
+if conn:
+    conn.close()
+       
 @st.cache_resource
 def get_connection():
     return psycopg2.connect(
