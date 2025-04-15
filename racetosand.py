@@ -30,11 +30,18 @@ def get_connection():
 conn = get_connection()
 cursor = conn.cursor()
 
-# Hämta data med querys
+
 try:
-    st.write("Getting table1")
     cursor.execute("SELECT * FROM spelare;")
     df_golfid = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
+except Exception as e:
+    st.error(f"Fel vid datahämtning från 'spelare': {e}")
+    conn.rollback()
+    st.stop()
+       
+# Hämta data med querys
+try:
+
 
     st.write("Getting table2")
     cursor.execute("SELECT * FROM competitions;")
