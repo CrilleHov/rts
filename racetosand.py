@@ -381,3 +381,7 @@ with tab8:
     tab8.title("Golf-id för respektive spelare")
     for row in df_golfid.itertuples():
         st.write(f"{row.spelarnamn}  {row.golfid}")
+
+
+conn.close()
+cursor.close()
