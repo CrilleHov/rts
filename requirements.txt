@@ -3,4 +3,5 @@ pandas
 numpy
 datetime
 st_social_media_links
-psycopg2
+sqlalchemy
+psycopg2-binary
