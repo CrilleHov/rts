@@ -65,6 +65,7 @@ try:
 
 except Exception as e:
     st.error(f"Något gick fel med datahämtningen: {e}")
+    conn.rollback()
     st.stop()
 
 
