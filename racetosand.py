@@ -267,6 +267,7 @@ with tab3:
                 st.cache_data.clear()
                 st.rerun()
             except Error as e:
+                conn.rollback()
                 st.error(f"Något gick fel vid uppdatering av böter: {e}")
 
 
@@ -357,6 +358,7 @@ with tab7:
                     st.cache_data.clear()
                     st.rerun()
             except Error as e:
+                conn.rollback()
                 st.error(f"Något gick fel vid uppdatering av böter: {e}")
 
 
