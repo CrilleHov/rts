@@ -31,11 +31,7 @@ def get_connection():
 
 conn = get_connection()
 cursor = conn.cursor()
-# Stäng befintlig anslutning om den finns
-if conn:
-    conn.close()
-conn = get_connection()
-cursor = conn.cursor()
+
 
 try:
     cursor.execute("SELECT * FROM public.spelare;")
