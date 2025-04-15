@@ -18,7 +18,6 @@ hide_default_format = """
 st.markdown(hide_default_format, unsafe_allow_html=True)
 
 
-       
 @st.cache_resource
 def get_connection():
     return psycopg2.connect(
@@ -382,6 +381,3 @@ with tab8:
     for row in df_golfid.itertuples():
         st.write(f"{row.spelarnamn}  {row.golfid}")
 
-
-conn.close()
-cursor.close()
