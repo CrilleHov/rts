@@ -4,12 +4,8 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 from st_social_media_links import SocialMediaIcons
-import mysql.connector
-from mysql.connector import Error
 
 import psycopg2
-from dotenv import load_dotenv
-import os
 
 st.set_page_config(page_title="Race to Hills 2025")
 hide_default_format = """
