@@ -1,7 +1,8 @@
 mysql-connector-python==9.2.0
-SQLAlchemy==2.0.40
+st-supabase-connection==2.0.1
 streamlit
 pandas
 numpy
 datetime
 st_social_media_links
+psycopg2
