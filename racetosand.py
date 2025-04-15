@@ -17,9 +17,7 @@ hide_default_format = """
        """
 st.markdown(hide_default_format, unsafe_allow_html=True)
 
-# Stäng befintlig anslutning om den finns
-if conn:
-    conn.close()
+
        
 @st.cache_resource
 def get_connection():
@@ -33,7 +31,11 @@ def get_connection():
 
 conn = get_connection()
 cursor = conn.cursor()
-
+# Stäng befintlig anslutning om den finns
+if conn:
+    conn.close()
+conn = get_connection()
+cursor = conn.cursor()
 
 try:
     cursor.execute("SELECT * FROM public.spelare;")
