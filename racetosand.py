@@ -32,12 +32,15 @@ cursor = conn.cursor()
 
 # Hämta data med querys
 try:
+    st.write("Getting table1")
     cursor.execute("SELECT * FROM spelare;")
     df_golfid = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
 
+    st.write("Getting table2")
     cursor.execute("SELECT * FROM competitions;")
     df_spelschema = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
 
+    st.write("Getting table3")
     cursor.execute("""
         SELECT spelare AS Spelare, 
             SUM(poäng) AS poäng,
