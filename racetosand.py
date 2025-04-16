@@ -422,5 +422,4 @@ with tab9:
     st.write("IT: Crille")
     st.write("Merch: Löken")
 
-st.cache_resource.clear()
 
