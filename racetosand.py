@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit import connections
 import pandas as pd
 import numpy as np
+import plotly.express as px
 import datetime as dt
 from st_social_media_links import SocialMediaIcons
 import psycopg2
@@ -210,8 +211,21 @@ with tab1:
     tab1.dataframe(df_leaderboard.sort_values('Totala poäng', ascending=False), use_container_width=True, 
                    hide_index=True)
 
-    tab1.line_chart(df_leaderboard_chart, x='tävling', y='totala_poäng', color='spelare', 
-                    width=800, height=500, x_label = 'Datum', y_label='Totala poäng')
+    fig = px.line(df_placering,
+                  x="tävling",
+                  y="poäng",
+                  color="spelare",
+                  markers=True,
+                  title="Poängutveckling")
+
+    fig.update_layout(xaxis_title="Tävling",
+                  yaxis_title="Poäng",
+                  hovermode="x unified",
+                  template="plotly_white")
+       
+    st.plotly_chart(fig, use_container_width=True)
+    # tab1.line_chart(df_leaderboard_chart, x='tävling', y='totala_poäng', color='spelare', 
+    #                 width=800, height=500, x_label = 'Datum', y_label='Totala poäng')
 
     with st.form(key='update', border=False):
         update = st.form_submit_button(label='Uppdatera sidan')
