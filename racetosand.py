@@ -32,50 +32,66 @@ conn = get_connection()
 cursor = conn.cursor()
 
 
+
+# Hämta data med querys
 try:
     cursor.execute("SELECT * FROM public.spelare;")
     df_golfid = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
 except Exception as e:
-    st.error(f"Fel vid datahämtning från 'spelare': {e}")
+    st.error(f"Fel vid datahämtning från databas (spelare): {e}")
     conn.rollback()
     st.stop()
-       
-# Hämta data med querys
+
 try:
-
-
-    st.write("Getting table2")
-    cursor.execute("SELECT * FROM competitions;")
+    cursor.execute("SELECT * FROM public.competitions;")
     df_spelschema = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
+except Exception as e:
+    st.error(f"Fel vid datahämtning från databas (tävlingar): {e}")
+    conn.rollback()
+    st.stop()
 
-    st.write("Getting table3")
+try:
     cursor.execute("""
         SELECT spelare AS Spelare, 
             SUM(poäng) AS poäng,
             SUM(CASE WHEN poäng != 0 THEN 1 ELSE 0 END) AS antal_comps,
             SUM(CASE WHEN placering = 1 THEN 1 ELSE 0 END) AS antal_vinster,
             SUM(CASE WHEN placering = antal_spelare THEN 1 ELSE 0 END) AS antal_losses
-        FROM leaderboard
+        FROM public.leaderboard
         GROUP BY spelare;
     """)
     df_leaderboard = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
+except Exception as e:
+    st.error(f"Fel vid datahämtning från databas (leaderboard): {e}")
+    conn.rollback()
+    st.stop()
 
-    cursor.execute("SELECT * FROM leaderboard;")
+try:
+    cursor.execute("SELECT * FROM public.leaderboard;")
     df_leaderboard_chart = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
+except Exception as e:
+    st.error(f"Fel vid datahämtning från databas (leaderboard graf): {e}")
+    conn.rollback()
+    st.stop()
 
+try:
     cursor.execute("""
         SELECT spelare,
             ROUND(SUM(bötesbelopp)) AS total_böter
-        FROM fees
+        FROM public.fees
         GROUP BY spelare;
     """)
     df_böter = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
-
-    cursor.execute("SELECT * FROM tot_böter WHERE datum = (SELECT MAX(datum) FROM tot_böter);")
-    df_tot_böter = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
-
 except Exception as e:
-    st.error(f"Något gick fel med datahämtningen: {e}")
+    st.error(f"Fel vid datahämtning från databas (spelarböter): {e}")
+    conn.rollback()
+    st.stop()
+
+try:
+    cursor.execute("SELECT * FROM public.tot_böter WHERE datum = (SELECT MAX(datum) FROM tot_böter);")
+    df_tot_böter = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
+except Exception as e:
+    st.error(f"Fel vid datahämtning från databas (total böter): {e}")
     conn.rollback()
     st.stop()
 
