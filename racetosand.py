@@ -211,15 +211,15 @@ with tab1:
     tab1.dataframe(df_leaderboard.sort_values('Totala poäng', ascending=False), use_container_width=True, 
                    hide_index=True)
 
-    fig = px.line(df_placering,
+    fig = px.line(df_leaderboard_chart,
                   x="tävling",
-                  y="poäng",
+                  y="totala_poäng",
                   color="spelare",
                   markers=True,
                   title="Poängutveckling")
 
     fig.update_layout(xaxis_title="Tävling",
-                  yaxis_title="Poäng",
+                  yaxis_title="Totala poäng",
                   hovermode="x unified",
                   template="plotly_white")
        
