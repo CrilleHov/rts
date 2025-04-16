@@ -287,7 +287,7 @@ with tab3:
             try:
                 for player, fee in fees.items():
                     cursor.execute(
-                        "INSERT INTO böter (spelare, bötesbelopp) VALUES (%s, %s);",
+                        "INSERT INTO public.fees (spelare, bötesbelopp) VALUES (%s, %s);",
                         (player, fee)
                     )
                 conn.commit()
@@ -358,9 +358,6 @@ with tab7:
         
         submit_button = st.form_submit_button(label='Uppdatera leaderboard')
 
-
-
-
         if submit_button:
             placering2 = {}
             for player in player_names:
@@ -373,7 +370,7 @@ with tab7:
             try:
                 for player, data in placering2.items():
                     cursor.execute("""
-                        INSERT INTO leaderboard (tävling, spelare, poäng, placering, antal_spelare)
+                        INSERT INTO public.leaderboard (tävling, spelare, poäng, placering, antal_spelare)
                         VALUES (%s, %s, %s, %s, %s);
                     """, (comp, player, data['point'], data['placering'], num_players))
                 conn.commit()
