@@ -317,6 +317,7 @@ with tab3:
 
 # Bildtab
 with tab4:
+    tab4.header("Lagbilder")
     tab4.image("bild6.jpg")
     tab4.image("bild1.jpg")
     tab4.image("bild2.jpeg")
@@ -406,13 +407,13 @@ with tab7:
 
 # Golf-id
 with tab8:
-    tab8.title("Golf-id för respektive spelare")
+    tab8.header("Golf-id för respektive spelare")
     for row in df_golfid.itertuples():
         st.write(f"{row.spelarnamn}  {row.golfid}")
 
 # Ansvarsområden
 with tab9:
-    st.title("Ansvarsmoråden för 2025")
+    st.header("Ansvarsmoråden för 2025")
     st.write("Youtube: Dempa")
     st.write("Sociala medier: Benne & Dempa")
     st.write("Sponsor: Alvin & Frasse")
