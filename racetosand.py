@@ -372,7 +372,7 @@ with tab7:
                     cursor.execute("""
                         INSERT INTO public.leaderboard (tävling, spelare, poäng, placering, antal_spelare)
                         VALUES (%s, %s, %s, %s, %s);
-                    """, (comp, player, data['point'], data['placering'], num_players))
+                    """, (comp, player, float(data['point']), int(data['placering']), int(num_players)))
                 conn.commit()
 
                 st.success("Leaderboarden är uppdaterad.")
