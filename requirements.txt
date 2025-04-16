@@ -5,3 +5,4 @@ datetime
 st_social_media_links
 sqlalchemy
 psycopg2-binary
+plotly
