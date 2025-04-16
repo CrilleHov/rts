@@ -421,5 +421,6 @@ with tab9:
     st.write("Ekonomi: Axel & Crille")
     st.write("IT: Crille")
     st.write("Merch: Löken")
-       
+
+st.cache_resource.clear()
 
