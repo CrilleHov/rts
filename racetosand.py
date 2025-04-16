@@ -209,6 +209,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs(['🏆 Leaderboar
 
 # Leaderboardtab
 with tab1:
+    tab1.header("Leaderboard")
     tab1.dataframe(df_leaderboard.sort_values('Totala poäng', ascending=False), use_container_width=True, 
                    hide_index=True)
 
