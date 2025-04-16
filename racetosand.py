@@ -195,14 +195,15 @@ social_media_icons.render()
 st.divider()
 
 # Skapa tabs
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(['🏆 Leaderboard', 
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs(['🏆 Leaderboard', 
                                                           '📅 Spelschema', 
                                                           '💸 Böteskassa', 
                                                           '📸 Bilder', 
                                                           '⏱️ Countdown',
                                                           '🏅 Tidigare vinnare', 
                                                           'Uppdatera leaderboard', 
-                                                          'Golf-id'])
+                                                          'Golf-id',
+                                                         'Ansvarsområde'])
 
 
 
@@ -408,4 +409,15 @@ with tab8:
     tab8.title("Golf-id för respektive spelare")
     for row in df_golfid.itertuples():
         st.write(f"{row.spelarnamn}  {row.golfid}")
+
+# Ansvarsområden
+with tab9:
+    st.title("Ansvarsmoråden för 2025")
+    st.write("Youtube: Dempa")
+    st.write("Sociala medier: Benne & Dempa")
+    st.write("Sponsor: Alvin & Frasse")
+    st.write("Ekonomi: Axel & Crille")
+    st.write("IT: Crille")
+    st.write("Merch: Löken")
+       
 
