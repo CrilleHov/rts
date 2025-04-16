@@ -215,7 +215,8 @@ with tab1:
                   x="tävling",
                   y="totala_poäng",
                   color="spelare",
-                  markers=True,
+                  markers=False,
+                  hover_data=["totala_poäng"],
                   title="Poängutveckling")
 
     fig.update_layout(xaxis_title="Tävling",
@@ -282,7 +283,7 @@ with tab3:
         st.write(f"{row.spelare}:  {row.total_böter} kr")
     
     tab3.write("")
-    tab3.bar_chart(df_böter, x='spelare', y='total_böter', x_label='Spelare', y_label='Total böter, kr', color='spelare')
+    tab3.bar_chart(df_böter, x='spelare', y='total_böter', x_label='Spelare', y_label='Total böter, kr')
 
     tab3.divider()
 
