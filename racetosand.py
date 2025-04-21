@@ -32,6 +32,7 @@ def get_connection():
 conn = get_connection()
 cursor = conn.cursor()
 
+admin_password = st.secrets["auth"]["admin_password"]
 
 
 # Hämta data med querys
@@ -297,23 +298,31 @@ with tab3:
         for player in player_names:
             fee = st.number_input(f"Böter för {player}", min_value=0, step=1, key=player)
             fees[player] = fee
-        
+
+        password = st.text_input("Lösenord", type="password")
         submit_button = st.form_submit_button(label='Uppdatera spelarböter')
 
         if submit_button:
-            try:
-                for player, fee in fees.items():
-                    cursor.execute(
-                        "INSERT INTO public.fees (spelare, bötesbelopp) VALUES (%s, %s);",
-                        (player, fee)
-                    )
-                conn.commit()
-                st.success("Bötesbeloppen är uppdaterade.")
-                st.cache_data.clear()
-                st.rerun()
-            except Error as e:
-                conn.rollback()
-                st.error(f"Något gick fel vid uppdatering av böter: {e}")
+            if not password:
+              st.error("Du måste fylla i ett lösenord.")
+
+            elif password != admin_password:
+              st.error("Felaktigt lösenord.")
+
+            else:
+                   try:
+                       for player, fee in fees.items():
+                           cursor.execute(
+                               "INSERT INTO public.fees (spelare, bötesbelopp) VALUES (%s, %s);",
+                               (player, fee)
+                           )
+                       conn.commit()
+                       st.success("Bötesbeloppen är uppdaterade.")
+                       st.cache_data.clear()
+                       st.rerun()
+                   except Error as e:
+                       conn.rollback()
+                       st.error(f"Något gick fel vid uppdatering av böter: {e}")
 
 
 # Bildtab
