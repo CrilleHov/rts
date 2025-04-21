@@ -299,8 +299,9 @@ with tab3:
             fee = st.number_input(f"Böter för {player}", min_value=0, step=1, key=player)
             fees[player] = fee
 
-        password = st.text_input("Lösenord", type="password")
+        
         submit_button = st.form_submit_button(label='Uppdatera spelarböter')
+        password = st.text_input("Lösenord", type="password")
 
         if submit_button:
             if not password:
@@ -384,6 +385,7 @@ with tab7:
             placering[player] = placering_spelare
         
         submit_button = st.form_submit_button(label='Uppdatera leaderboard')
+        password = st.text_input("Lösenord", type="password")
 
         if submit_button:
             placering2 = {}
@@ -394,24 +396,31 @@ with tab7:
                     'placering': placering_spelare
                 }
 
-            try:
-                for player, data in placering2.items():
-                    cursor.execute("""
-                        INSERT INTO public.leaderboard (tävling, spelare, poäng, placering, antal_spelare)
-                        VALUES (%s, %s, %s, %s, %s);
-                    """, (comp, player, float(data['point']), int(data['placering']), int(num_players)))
-                conn.commit()
+            if not password:
+              st.error("Du måste fylla i ett lösenord.")
 
-                st.success("Leaderboarden är uppdaterad.")
-                spelade = sum(1 for p in placering.values() if p > 0)
-                if spelade != int(num_players):
-                    st.warning(f"Du angav att {num_players} spelade men du har fyllt i {spelade} placeringar... Kontakta IT för att rätta i databasen!")
-                else:
-                    st.cache_data.clear()
-                    st.rerun()
-            except Error as e:
-                conn.rollback()
-                st.error(f"Något gick fel vid uppdatering av böter: {e}")
+            elif password != admin_password:
+              st.error("Felaktigt lösenord.")
+
+            else:
+                   try:
+                       for player, data in placering2.items():
+                           cursor.execute("""
+                               INSERT INTO public.leaderboard (tävling, spelare, poäng, placering, antal_spelare)
+                               VALUES (%s, %s, %s, %s, %s);
+                           """, (comp, player, float(data['point']), int(data['placering']), int(num_players)))
+                       conn.commit()
+       
+                       st.success("Leaderboarden är uppdaterad.")
+                       spelade = sum(1 for p in placering.values() if p > 0)
+                       if spelade != int(num_players):
+                           st.warning(f"Du angav att {num_players} spelade men du har fyllt i {spelade} placeringar... Kontakta IT för att rätta i databasen!")
+                       else:
+                           st.cache_data.clear()
+                           st.rerun()
+                   except Error as e:
+                       conn.rollback()
+                       st.error(f"Något gick fel vid uppdatering av böter: {e}")
 
 
 
