@@ -428,7 +428,7 @@ with tab7:
 with tab8:
     tab8.header("Golf-id för respektive spelare")
     for row in df_golfid.itertuples():
-        st.write(f"{row.spelarnamn}  {row.golfid}")
+        st.write(f"{row.spelarnamn}:  {row.golfid}")
 
 # Ansvarsområden
 with tab9:
