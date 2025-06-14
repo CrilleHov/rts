@@ -112,7 +112,7 @@ df_leaderboard = df_leaderboard.rename(columns={'spelare': 'Spelare',
                                                 'antal_vinster':'Antal vinster',
                                                 'antal_losses':'Antal sistaplatser'})
 
-df_böter['total_böter'] = df_böter['total_böter'].round(0).astype(int)
+df_böter['total_böter'] = df_böter['total_böter'].astype(int)
 
 # Funktion för att hämta rätt poäng efter placering, hur många spelare som var med, och om tävlingen var en major
 def get_points(placering=1, antal_spelare=3, major_flag='Nej'):
